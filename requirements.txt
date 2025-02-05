@@ -4,4 +4,3 @@ lxml
 openpyxl
 xlrd
 odfpy
-python-magic-bin

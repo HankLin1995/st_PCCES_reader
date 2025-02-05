@@ -90,8 +90,9 @@ def process_main_items(tree_data):
     """處理總表數據"""
     main_items = []
     
-    def process_node(node):
-        if node['item_kind'] == 'mainItem':
+    def process_node(node, step=0):
+        # 檢查是否為主項目（step=0 且 item_kind 不為空）
+        if step == 0 and node['item_kind']:
             main_items.append({
                 '項目代碼': node['item_code'],
                 '參考編號': node['ref_item_no'],
@@ -103,9 +104,9 @@ def process_main_items(tree_data):
                 '金額': node['amount']
             })
         
-        # 處理子節點
+        # 處理子節點，step加1
         for child in node['children']:
-            process_node(child)
+            process_node(child, step + 1)
     
     # 處理所有頂層節點
     for node in tree_data:
@@ -186,37 +187,51 @@ def main():
             # 讀取 XML 樹狀結構（只讀取一次）
             tree_data = XMLProcessor.process_cost_breakdown_tree(input_path)
             
+            pay_items_data = XMLProcessor.process_xml_file(input_path, "PayItem")
+
             with subtab1:
                 st.header("總表")
-                if tree_data:
-                    main_items = process_main_items(tree_data)
-                    if main_items:
-                        main_items_df = pd.DataFrame(main_items)
-                        st.dataframe(main_items_df)
-                        
-                        # 準備 CSV 下載
-                        csv_path = os.path.join('data', 'output', 'MainItemSheet.csv')
-                        main_items_df.to_csv(csv_path, index=False, encoding='utf-8-sig')
-                        
-                        with open(csv_path, 'rb') as f:
-                            st.download_button(
-                                label="下載 CSV",
-                                data=f,
-                                file_name="MainItemSheet.csv",
-                                mime="text/csv"
-                            )
-                    else:
-                        st.info("總表沒有數據可顯示")
+                # if tree_data:
+                    # main_items = process_main_items(tree_data)
+                if pay_items_data:
+
+                    pay_items_df=pd.DataFrame(pay_items_data)
+
+                    main_items_df = pay_items_df[(pay_items_df['階層'] <= 1) & (pay_items_df['項目種類'].isin(['mainItem','subtotal', 'formula']))]
+
+                    # main_items_df = pd.DataFrame(pay_items_data)
+                    st.dataframe(
+                        main_items_df[["項次","說明", "單位", "數量", "單價", "金額"]],  # 只顯示這幾個欄位,
+                        hide_index=True,  # 隱藏索引
+                        use_container_width=True  # 使用容器寬度
+                    )
+                    # # 準備 CSV 下載
+                    # csv_path = os.path.join('data', 'output', 'MainItemSheet.csv')
+                    # main_items_df.to_csv(csv_path, index=False, encoding='utf-8-sig')
+                    
+                    # with open(csv_path, 'rb') as f:
+                    #     st.download_button(
+                    #         label="下載 CSV",
+                    #         data=f,
+                    #         file_name="MainItemSheet.csv",
+                    #         mime="text/csv"
+                    #     )
                 else:
-                    st.error("無法讀取 XML 檔案中的數據")
+                    st.info("總表沒有數據可顯示")
+                # else:
+                    # st.error("無法讀取 XML 檔案中的數據")
             
             with subtab2:
                 st.header("詳細價目表")
-                pay_items_data = XMLProcessor.process_xml_file(input_path, "PayItem")
+                # pay_items_data = XMLProcessor.process_xml_file(input_path, "PayItem")
                 if pay_items_data:
                     pay_items_df = pd.DataFrame(pay_items_data)
-                    st.dataframe(pay_items_df)
-                    
+                    # pay_items_df=pay_items_df[pay_items_df['階層']<=1]
+                    st.dataframe(
+                        pay_items_df[["項次","說明", "單位", "數量", "單價", "金額","項目代碼"]],  # 只顯示這幾個欄位,
+                        hide_index=True,  # 隱藏索引
+                        use_container_width=True  # 使用容器寬度
+                    )
                     # 準備 CSV 下載
                     csv_path = os.path.join('data', 'output', 'DetailedPriceSheet.csv')
                     pay_items_df.to_csv(csv_path, index=False, encoding='utf-8-sig')
@@ -261,65 +276,66 @@ def main():
                         )
 
     with tab2:
-        st.header("Excel 轉換為 XML")
-        excel_file = st.file_uploader(
-            "選擇 Excel 檔案",
-            type=['xlsx', 'xls', 'xlsm', 'xlsb', 'odf', 'ods', 'odt'],
-            key="excel_uploader"
-        )
+        st.warning("Excel 轉換功能開發中...")
+        # st.header("Excel 轉換為 XML")
+    #     excel_file = st.file_uploader(
+    #         "選擇 Excel 檔案",
+    #         type=['xlsx', 'xls', 'xlsm', 'xlsb', 'odf', 'ods', 'odt'],
+    #         key="excel_uploader"
+    #     )
         
-        if excel_file is not None:
-            # 顯示 Excel 內容預覽
-            df = read_excel_file(excel_file)
-            if df is not None:
-                st.subheader("Excel 內容預覽")
-                st.dataframe(df)
+    #     if excel_file is not None:
+    #         # 顯示 Excel 內容預覽
+    #         df = read_excel_file(excel_file)
+    #         if df is not None:
+    #             st.subheader("Excel 內容預覽")
+    #             st.dataframe(df)
                 
-                # 轉換按鈕
-                if st.button("轉換為 XML"):
-                    try:
-                        # 保存上傳的 Excel 檔案
-                        input_excel = os.path.join('data', 'input', 'temp.xlsx')
-                        with open(input_excel, "wb") as f:
-                            f.write(excel_file.getvalue())
+    #             # 轉換按鈕
+    #             if st.button("轉換為 XML"):
+    #                 try:
+    #                     # 保存上傳的 Excel 檔案
+    #                     input_excel = os.path.join('data', 'input', 'temp.xlsx')
+    #                     with open(input_excel, "wb") as f:
+    #                         f.write(excel_file.getvalue())
                         
-                        # 轉換為 XML
-                        xml_tree = ExcelToXMLConverter.convert_excel_to_xml(input_excel)
-                        output_xml = os.path.join('data', 'output', 'output.xml')
-                        ExcelToXMLConverter.save_xml(xml_tree, output_xml)
+    #                     # 轉換為 XML
+    #                     xml_tree = ExcelToXMLConverter.convert_excel_to_xml(input_excel)
+    #                     output_xml = os.path.join('data', 'output', 'output.xml')
+    #                     ExcelToXMLConverter.save_xml(xml_tree, output_xml)
                         
-                        # 提供下載連結
-                        with open(output_xml, "rb") as f:
-                            xml_bytes = f.read()
+    #                     # 提供下載連結
+    #                     with open(output_xml, "rb") as f:
+    #                         xml_bytes = f.read()
                         
-                        st.download_button(
-                            label="下載 XML 檔案",
-                            data=xml_bytes,
-                            file_name="converted.xml",
-                            mime="application/xml"
-                        )
+    #                     st.download_button(
+    #                         label="下載 XML 檔案",
+    #                         data=xml_bytes,
+    #                         file_name="converted.xml",
+    #                         mime="application/xml"
+    #                     )
                         
-                        # 清理臨時檔案
-                        os.remove(input_excel)
-                        os.remove(output_xml)
+    #                     # 清理臨時檔案
+    #                     os.remove(input_excel)
+    #                     os.remove(output_xml)
                         
-                        st.success("轉換成功！")
-                    except Exception as e:
-                        st.error(f"轉換失敗：{str(e)}")
+    #                     st.success("轉換成功！")
+    #                 except Exception as e:
+    #                     st.error(f"轉換失敗：{str(e)}")
                 
-                # 顯示 Excel 格式說明
-                st.subheader("Excel 格式說明")
-                st.markdown("""
-                Excel 檔案應包含以下欄位：
-                - 項次
-                - 項目代碼
-                - 項目種類（預設為 analysis）
-                - 說明
-                - 單位
-                - 數量
-                - 單價
-                - 金額
-                """)
+    #             # 顯示 Excel 格式說明
+    #             st.subheader("Excel 格式說明")
+    #             st.markdown("""
+    #             Excel 檔案應包含以下欄位：
+    #             - 項次
+    #             - 項目代碼
+    #             - 項目種類（預設為 analysis）
+    #             - 說明
+    #             - 單位
+    #             - 數量
+    #             - 單價
+    #             - 金額
+    #             """)
 
 if __name__ == "__main__":
     main()

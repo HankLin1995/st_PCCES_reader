@@ -1,0 +1,10 @@
+.env
+__pycache__
+etc
+Include
+Lib
+photos
+photos_result
+photos_delete
+Scripts
+share
