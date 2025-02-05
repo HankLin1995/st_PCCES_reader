@@ -232,17 +232,30 @@ def main():
                         hide_index=True,  # 隱藏索引
                         use_container_width=True  # 使用容器寬度
                     )
-                    # 準備 CSV 下載
-                    csv_path = os.path.join('data', 'output', 'DetailedPriceSheet.csv')
-                    pay_items_df.to_csv(csv_path, index=False, encoding='utf-8-sig')
                     
-                    with open(csv_path, 'rb') as f:
-                        st.download_button(
-                            label="下載 CSV",
-                            data=f,
-                            file_name="DetailedPriceSheet.csv",
-                            mime="text/csv"
-                        )
+                    import io
+
+                    # 確保 data/output 目錄存在
+                    output_dir = os.path.join("data", "output")
+                    os.makedirs(output_dir, exist_ok=True)  # 自動建立資料夾
+
+                    # 設定 CSV 檔案路徑
+                    csv_path = os.path.join(output_dir, "DetailedPriceSheet.csv")
+
+                    # 儲存 CSV 檔案
+                    pay_items_df.to_csv(csv_path, index=False, encoding="utf-8-sig")
+
+                    # 用 BytesIO 避免文件佔用問題
+                    with open(csv_path, "rb") as f:
+                        csv_bytes = io.BytesIO(f.read())
+
+                    # 下載按鈕
+                    st.download_button(
+                        label="下載 CSV",
+                        data=csv_bytes,
+                        file_name="DetailedPriceSheet.csv",
+                        mime="text/csv"
+                    )
             
             with subtab3:
                 st.header("單價分析")
