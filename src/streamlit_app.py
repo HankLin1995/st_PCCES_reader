@@ -227,8 +227,12 @@ def main():
                 if pay_items_data:
                     pay_items_df = pd.DataFrame(pay_items_data)
                     # pay_items_df=pay_items_df[pay_items_df['階層']<=1]
+                    # 格式化金額欄位為千分位
+                    pay_items_df['金額'] = pay_items_df['金額'].apply(lambda x: '{:,.0f}'.format(float(x)) if pd.notnull(x) else x)
+                    pay_items_df['單價'] = pay_items_df['單價'].apply(lambda x: '{:,.0f}'.format(float(x)) if pd.notnull(x) else x)
+                    
                     st.dataframe(
-                        pay_items_df[["項次","說明", "單位", "數量", "單價", "金額","項目代碼"]],  # 只顯示這幾個欄位,
+                        pay_items_df[["項次","說明", "單位", "數量", "單價", "金額","項目代碼"]],  # 只顯示這幾個欄位
                         hide_index=True,  # 隱藏索引
                         use_container_width=True  # 使用容器寬度
                     )
