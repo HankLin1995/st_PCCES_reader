@@ -197,8 +197,10 @@ def main():
 
                     pay_items_df=pd.DataFrame(pay_items_data)
 
-                    main_items_df = pay_items_df[(pay_items_df['階層'] <= 1) & (pay_items_df['項目種類'].isin(['mainItem','subtotal', 'formula']))]
+                    # 先篩選出項目種類不為空白的項目
+                    pay_items_df = pay_items_df.dropna(subset=['項目種類'])
 
+                    main_items_df = pay_items_df[(pay_items_df['階層'] <= 1) & (pay_items_df['項目種類'].isin(['mainItem','subtotal', 'formula']))]
 
                     # 先將字串轉換為數值，再進行千分位格式化
                     main_items_df["金額"] = pd.to_numeric(main_items_df["金額"], errors='coerce')
@@ -233,10 +235,9 @@ def main():
                 # pay_items_data = XMLProcessor.process_xml_file(input_path, "PayItem")
                 if pay_items_data:
                     pay_items_df = pd.DataFrame(pay_items_data)
-                    #篩選項目種類不為空白
-                    pay_items_df=pay_items_df[pay_items_df['項目種類'].notnull()]
-                    #pay_items_df=pay_items_df[pay_items_df['項目種類'].isin(['mainItem','subtotal', 'formula'])]
-                    # pay_items_df=pay_items_df[pay_items_df['階層']<=1]
+                    pay_items_df = pay_items_df[pay_items_df['項目種類'].isin(['mainItem','analysis', 'variablePrice', 'general','subtotal', 'formula'])]
+
+                    # pay_items_df=pay_items_df[pay_items_df['項目種類'].isin(['mainItem','subtotal', 'formula'])]
                     # 格式化金額欄位為千分位
                     pay_items_df['金額'] = pay_items_df['金額'].apply(lambda x: '{:,.0f}'.format(float(x)) if pd.notnull(x) else x)
                     pay_items_df['單價'] = pay_items_df['單價'].apply(lambda x: '{:,.0f}'.format(float(x)) if pd.notnull(x) else x)
