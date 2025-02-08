@@ -200,6 +200,11 @@ def main():
                     main_items_df = pay_items_df[(pay_items_df['階層'] <= 1) & (pay_items_df['項目種類'].isin(['mainItem','subtotal', 'formula']))]
 
                     # main_items_df = pd.DataFrame(pay_items_data)
+                    if main_items_df['金額'].dtype == 'float64':
+                        main_items_df['金額'] = main_items_df['金額'].apply(lambda x: '{:,.0f}'.format(x))
+                    if '單價' in main_items_df.columns and main_items_df['單價'].dtype == 'float64':
+                        main_items_df['單價'] = main_items_df['單價'].apply(lambda x: '{:,.0f}'.format(x))
+                    
                     st.dataframe(
                         main_items_df[["項次","說明", "單位", "數量", "單價", "金額"]],  # 只顯示這幾個欄位,
                         hide_index=True,  # 隱藏索引
