@@ -275,7 +275,7 @@ def main():
                 if work_items_data:
                     analysis_tables = process_analysis_data(tree_data)
                     # 簡化為只有說明文字搜尋，並添加placeholder提示
-                    search_desc = st.text_input("搜尋說明文字", placeholder="輸入要搜尋的說明文字...")
+                    search_desc = st.text_input("搜尋說明文字(查看全部請輸入空格)", placeholder="輸入要搜尋的說明文字...")
                     
                     # 根據說明文字篩選分析表
                     filtered_tables = {}
