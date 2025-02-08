@@ -233,6 +233,8 @@ def main():
                 # pay_items_data = XMLProcessor.process_xml_file(input_path, "PayItem")
                 if pay_items_data:
                     pay_items_df = pd.DataFrame(pay_items_data)
+                    #篩選項目種類不為空白
+                    pay_items_df=pay_items_df[pay_items_df['項目種類'].notnull()]
                     # pay_items_df=pay_items_df[pay_items_df['階層']<=1]
                     # 格式化金額欄位為千分位
                     pay_items_df['金額'] = pay_items_df['金額'].apply(lambda x: '{:,.0f}'.format(float(x)) if pd.notnull(x) else x)
