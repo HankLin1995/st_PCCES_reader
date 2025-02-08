@@ -254,7 +254,8 @@ def main():
                         label="下載 CSV",
                         data=csv_bytes,
                         file_name="DetailedPriceSheet.csv",
-                        mime="text/csv"
+                        mime="text/csv",
+                        type="primary"
                     )
             
             with subtab3:
