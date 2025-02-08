@@ -392,8 +392,8 @@ def main():
 def show_info():
     with st.sidebar:
         SYSTEM_VERSION="V1.0"
-        st.title(":globe_with_meridians: XML處理工具 "+SYSTEM_VERSION)
-        st.write("這是用於提報計畫時的估算工具")
+        st.title(":globe_with_meridians: PCCES後處理工具 "+SYSTEM_VERSION)
+        st.write("這是用於PCCES產製之XML檔案的處理工具")
         st.info("作者:**林宗漢**")
         st.info("部落格: [Hank's Blog](https://hanksvba.com)")
         st.markdown("---")
