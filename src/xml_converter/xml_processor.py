@@ -59,11 +59,11 @@ class XMLProcessor:
                 '項目種類': item_kind,
                 '項次': item_no,
                 '說明': description,
-                '階層': depth,
                 '單位': unit,
                 '數量': quantity,
                 '單價': price,
                 '金額': amount,
+                '階層': depth,
                 '分隔符號': sep
             }
         return None

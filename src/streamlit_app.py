@@ -166,14 +166,14 @@ def get_work_item_details(tree_data, item_code):
     return details
 
 def main():
-    st.title("XML 處理工具")
+    # st.title("XML 處理工具")
     
     # 創建兩個分頁
-    tab1, tab2 = st.tabs(["XML 處理", "Excel 轉換"])
+    # tab1, tab2 = st.tabs(["XML 處理", "Excel 轉換"])
     
-    with tab1:
-        st.header("XML 檔案處理")
-        xml_file = st.file_uploader("選擇 XML 檔案", type=['xml'], key="xml_uploader")
+    # with tab1:
+        st.sidebar.subheader(":open_file_folder: XML 上傳")
+        xml_file = st.sidebar.file_uploader("選擇 XML 檔案", type=['xml'], key="xml_uploader")
 
         if xml_file is not None:
             # 保存上傳的文件
@@ -199,12 +199,14 @@ def main():
 
                     main_items_df = pay_items_df[(pay_items_df['階層'] <= 1) & (pay_items_df['項目種類'].isin(['mainItem','subtotal', 'formula']))]
 
-                    # main_items_df = pd.DataFrame(pay_items_data)
-                    if main_items_df['金額'].dtype == 'float64':
-                        main_items_df['金額'] = main_items_df['金額'].apply(lambda x: '{:,.0f}'.format(x))
-                    if '單價' in main_items_df.columns and main_items_df['單價'].dtype == 'float64':
-                        main_items_df['單價'] = main_items_df['單價'].apply(lambda x: '{:,.0f}'.format(x))
+
+                    # 先將字串轉換為數值，再進行千分位格式化
+                    main_items_df["金額"] = pd.to_numeric(main_items_df["金額"], errors='coerce')
+                    main_items_df["單價"] = pd.to_numeric(main_items_df["單價"], errors='coerce')
                     
+                    main_items_df["金額"] = main_items_df["金額"].apply(lambda x: '{:,.0f}'.format(x) if pd.notnull(x) else '')
+                    main_items_df["單價"] = main_items_df["單價"].apply(lambda x: '{:,.0f}'.format(x) if pd.notnull(x) else '')
+
                     st.dataframe(
                         main_items_df[["項次","說明", "單位", "數量", "單價", "金額"]],  # 只顯示這幾個欄位,
                         hide_index=True,  # 隱藏索引
@@ -271,35 +273,61 @@ def main():
                 st.header("單價分析")
                 work_items_data = XMLProcessor.process_xml_file(input_path, "WorkItem")
                 if work_items_data:
-                    # 顯示工作項目表格
-                    for item in work_items_data:
-                        st.write(f"項目代碼: {item['項目代碼']} - {item['說明']}")
-                        # if st.button("查看細項", key=f"details_{item['項目代碼']}"):
-                            # 獲取細項資料
-                        details = get_work_item_details(tree_data, item['項目代碼'])
-                        
-                        # 使用對話框顯示細項
-                        # with st.expander(f"細項資料 - {item['說明']}"):
-                        if details:
-                            st.dataframe(pd.DataFrame(details), use_container_width=True)
-                        else:
-                            st.info("此項目沒有細項資料")
-                        st.markdown("---")
+                    analysis_tables = process_analysis_data(tree_data)
+                    # 簡化為只有說明文字搜尋，並添加placeholder提示
+                    search_desc = st.text_input("搜尋說明文字", placeholder="輸入要搜尋的說明文字...")
                     
-                    # 準備 CSV 下載
-                    csv_path = os.path.join('data', 'output', 'UnitPriceAnalysis.csv')
-                    pd.DataFrame(work_items_data).to_csv(csv_path, index=False, encoding='utf-8-sig')
+                    # 根據說明文字篩選分析表
+                    filtered_tables = {}
+                    for key, table in analysis_tables.items():
+                        if search_desc.lower() in table['主項']['說明'].lower():
+                            filtered_tables[key] = table
                     
-                    with open(csv_path, 'rb') as f:
-                        st.download_button(
-                            label="下載 CSV",
-                            data=f,
-                            file_name="UnitPriceAnalysis.csv",
-                            mime="text/csv"
-                        )
+                    if filtered_tables:
+                        for key, table in filtered_tables.items():
+                            with st.expander(key, expanded=True):
+                                # 主項資料
+                                # st.markdown("### 主項")
+                                # main_df = pd.DataFrame([table['主項']])
+                                # 格式化金額和單價
+                                # main_df['金額'] = main_df['金額'].apply(lambda x: '{:,.0f}'.format(float(x)) if pd.notnull(x) else x)
+                                # main_df['單價'] = main_df['單價'].apply(lambda x: '{:,.0f}'.format(float(x)) if pd.notnull(x) else x)
+                                # st.dataframe(
+                                #     main_df[["項目代碼", "說明", "單位", "數量", "單價", "金額"]],
+                                #     hide_index=True,
+                                #     use_container_width=True
+                                # )
 
-    with tab2:
-        st.warning("Excel 轉換功能開發中...")
+                                # 細項資料
+                                if table['細項']:
+                                    # st.markdown("### 細項")
+                                    detail_df = pd.DataFrame(table['細項'])
+                                    # 格式化金額和單價
+                                    detail_df['金額'] = detail_df['金額'].apply(lambda x: '{:,.0f}'.format(float(x)) if pd.notnull(x) else x)
+                                    detail_df['單價'] = detail_df['單價'].apply(lambda x: '{:,.0f}'.format(float(x)) if pd.notnull(x) else x)
+                                    st.dataframe(
+                                        detail_df[["項目代碼", "說明", "單位", "數量", "單價", "金額"]],
+                                        hide_index=True,
+                                        use_container_width=True
+                                    )
+                    else:
+                        st.info("沒有符合搜尋條件的分析表")
+                    
+                    # # 準備 CSV 下載
+                    # csv_path = os.path.join('data', 'output', 'UnitPriceAnalysis.csv')
+                    # pd.DataFrame(work_items_data).to_csv(csv_path, index=False, encoding='utf-8-sig')
+                    
+                    # with open(csv_path, 'rb') as f:
+                    #     st.download_button(
+                    #         label="下載 CSV",
+                    #         data=f,
+                    #         file_name="UnitPriceAnalysis.csv",
+                    #         mime="text/csv"
+                    #     )
+        else:
+            st.warning("請上傳 XML 檔案", icon="⚠️")
+    # with tab2:
+        # st.warning("Excel 轉換功能開發中...")
         # st.header("Excel 轉換為 XML")
     #     excel_file = st.file_uploader(
     #         "選擇 Excel 檔案",
@@ -360,5 +388,16 @@ def main():
     #             - 金額
     #             """)
 
+
+def show_info():
+    with st.sidebar:
+        SYSTEM_VERSION="V1.0"
+        st.title(":globe_with_meridians: XML處理工具 "+SYSTEM_VERSION)
+        st.write("這是用於提報計畫時的估算工具")
+        st.info("作者:**林宗漢**")
+        st.info("部落格: [Hank's Blog](https://hanksvba.com)")
+        st.markdown("---")
+
 if __name__ == "__main__":
+    show_info()
     main()
