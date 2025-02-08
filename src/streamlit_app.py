@@ -285,7 +285,7 @@ def main():
                     
                     if filtered_tables:
                         for key, table in filtered_tables.items():
-                            with st.expander(key, expanded=True):
+                            with st.expander(🔹 +key, expanded=True):
                                 # 主項資料
                                 # st.markdown("### 主項")
                                 # main_df = pd.DataFrame([table['主項']])
